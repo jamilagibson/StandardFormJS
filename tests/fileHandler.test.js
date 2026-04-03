@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { parseFile, generateDownloadBlob } from '../js/fileHandler.js';
 
 // jsdom's Blob doesn't support .text() — read via FileReader instead
@@ -122,5 +122,78 @@ describe('parseFile — CSV', () => {
     const file = new File([content], 'test.csv', { type: 'text/csv' });
     const { rows } = await parseFile(file);
     expect(rows).toHaveLength(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseFile — XLSX (mocked XLSX global)
+// ---------------------------------------------------------------------------
+describe('parseFile — XLSX (mocked global)', () => {
+  beforeEach(() => {
+    globalThis.XLSX = {
+      read: vi.fn().mockReturnValue({
+        SheetNames: ['Sheet1'],
+        Sheets: { Sheet1: {} },
+      }),
+      utils: {
+        sheet_to_json: vi.fn().mockReturnValue([
+          ['Standard', 'Grade'],
+          ['2.RF.3.b', '2'],
+          ['3.RL.4.a', '3'],
+        ]),
+      },
+    };
+  });
+
+  afterEach(() => {
+    delete globalThis.XLSX;
+  });
+
+  it('parses headers and rows from an XLSX file', async () => {
+    const file = new File([''], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const { headers, rows } = await parseFile(file);
+    expect(headers).toEqual(['Standard', 'Grade']);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toEqual(['2.RF.3.b', '2']);
+  });
+
+  it('returns empty headers and rows for an empty XLSX sheet', async () => {
+    globalThis.XLSX.utils.sheet_to_json.mockReturnValue([]);
+    const file = new File([''], 'empty.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const { headers, rows } = await parseFile(file);
+    expect(headers).toEqual([]);
+    expect(rows).toEqual([]);
+  });
+
+  it('rejects when XLSX.read throws', async () => {
+    globalThis.XLSX.read.mockImplementation(() => { throw new Error('corrupt'); });
+    const file = new File([''], 'bad.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    await expect(parseFile(file)).rejects.toThrow('Failed to parse XLSX file.');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateDownloadBlob — XLSX (mocked XLSX global)
+// ---------------------------------------------------------------------------
+describe('generateDownloadBlob — XLSX (mocked global)', () => {
+  beforeEach(() => {
+    globalThis.XLSX = {
+      utils: {
+        aoa_to_sheet: vi.fn().mockReturnValue({}),
+        book_new: vi.fn().mockReturnValue({}),
+        book_append_sheet: vi.fn(),
+      },
+      write: vi.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
+    };
+  });
+
+  afterEach(() => {
+    delete globalThis.XLSX;
+  });
+
+  it('returns a Blob with xlsx MIME type', () => {
+    const blob = generateDownloadBlob(['Standard'], [['2.RF.3.b']], 0, 'Normalized', 'xlsx');
+    expect(blob).toBeInstanceOf(Blob);
+    expect(blob.type).toContain('spreadsheetml');
   });
 });

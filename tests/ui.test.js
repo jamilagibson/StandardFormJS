@@ -154,6 +154,13 @@ describe('Tab switching', () => {
     singleTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
     expect(document.getElementById('tab-batch').getAttribute('aria-selected')).toBe('true');
   });
+
+  it('ignores non-navigation keys on tabs', () => {
+    const singleTab = document.getElementById('tab-single');
+    singleTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
+    // State unchanged — 'a' is not a tab navigation key
+    expect(singleTab.getAttribute('aria-selected')).toBe('true');
+  });
 });
 
 // ---------------------------------------------------------------------------
