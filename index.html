@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StandardForm — Normalize Educational Standard Codes</title>
+    <meta
+      name="description"
+      content="Paste or upload educational standard codes and instantly convert them to normalized format."
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <!-- SheetJS for XLSX support -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>StandardForm</h1>
+        <p>Convert educational standard codes to normalized format (e.g. 2.RF.3.b → RF.2.3.b).</p>
+      </header>
+
+      <main>
+        <!-- ── Tab list ─────────────────────────────────────────── -->
+        <div role="tablist" aria-label="Input mode">
+          <button
+            role="tab"
+            id="tab-single"
+            aria-selected="true"
+            aria-controls="panel-single"
+            tabindex="0"
+          >
+            Single
+          </button>
+          <button
+            role="tab"
+            id="tab-batch"
+            aria-selected="false"
+            aria-controls="panel-batch"
+            tabindex="-1"
+          >
+            Batch
+          </button>
+        </div>
+
+        <!-- ── Single mode panel ────────────────────────────────── -->
+        <section
+          role="tabpanel"
+          id="panel-single"
+          aria-labelledby="tab-single"
+        >
+          <div class="form-group">
+            <label for="standard-input">Standard code</label>
+            <input
+              type="text"
+              id="standard-input"
+              name="standard-input"
+              autocomplete="off"
+              spellcheck="false"
+              aria-describedby="input-hint input-error"
+              aria-invalid="false"
+              placeholder="e.g. 2.RF.3.b"
+            />
+            <span id="input-hint" class="hint">
+              Enter a dot-separated standard code with at least 4 segments.
+            </span>
+            <span
+              id="input-error"
+              class="error-message"
+              role="alert"
+              aria-live="assertive"
+              hidden
+            ></span>
+          </div>
+
+          <!-- Output -->
+          <div
+            class="output-region"
+            aria-live="polite"
+            aria-label="Transformed standard code"
+          >
+            <output
+              id="output-value"
+              class="output-value"
+              aria-label="Transformed standard code"
+              for="standard-input"
+            ></output>
+            <div class="btn-group">
+              <button
+                id="copy-btn"
+                class="btn btn-secondary"
+                aria-label="Copy result"
+                disabled
+              >
+                Copy
+              </button>
+              <button
+                id="clear-btn"
+                class="btn btn-secondary"
+                aria-label="Clear input and output"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Batch mode panel ─────────────────────────────────── -->
+        <section
+          role="tabpanel"
+          id="panel-batch"
+          aria-labelledby="tab-batch"
+          hidden
+        >
+          <!-- Drop zone -->
+          <div
+            id="drop-zone"
+            class="drop-zone"
+            role="button"
+            tabindex="0"
+            aria-label="Upload a CSV or XLSX file. Click or drag and drop."
+          >
+            <svg aria-hidden="true" focusable="false" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12M8 8l4-4 4 4"/>
+            </svg>
+            <p>Drag &amp; drop a <strong>.csv</strong> or <strong>.xlsx</strong> file here</p>
+            <p>or <strong>click to browse</strong></p>
+          </div>
+
+          <input
+            type="file"
+            id="file-input"
+            accept=".csv,.xlsx"
+            class="visually-hidden"
+            aria-label="Upload file"
+            tabindex="-1"
+          />
+
+          <!-- Hidden ext tracker -->
+          <span id="file-ext-label" data-ext="csv" class="visually-hidden"></span>
+
+          <!-- Loading spinner -->
+          <div id="loading-spinner" hidden aria-busy="false" aria-label="Loading file">
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Loading…</span>
+          </div>
+
+          <!-- File error -->
+          <span
+            id="file-error"
+            class="error-message"
+            role="alert"
+            aria-live="assertive"
+            hidden
+          ></span>
+
+          <!-- Column selector -->
+          <div id="column-selector" class="column-selector" hidden>
+            <div class="form-group">
+              <label for="column-select">Select the column containing standard codes</label>
+              <select id="column-select" aria-describedby="column-hint">
+              </select>
+              <span id="column-hint" class="hint">A preview of the first 10 rows will appear below.</span>
+            </div>
+
+            <!-- Preview table -->
+            <div id="preview-container" hidden>
+              <div class="preview-wrapper">
+                <table id="preview-table" class="preview-table" aria-label="Preview of first 10 rows with normalized standard column">
+                </table>
+              </div>
+            </div>
+
+            <div class="btn-group">
+              <button
+                id="download-btn"
+                class="btn btn-primary"
+                aria-label="Download file with normalized standards column"
+                disabled
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Aria-live status announcer (screen readers only) -->
+    <div
+      id="status-announcer"
+      class="visually-hidden"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
+
+    <script type="module" src="js/ui.js"></script>
+  </body>
+</html>
